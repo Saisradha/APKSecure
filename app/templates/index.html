@@ -10,6 +10,44 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 </head>
 <body>
+  <div class="auth-overlay" id="authOverlay" aria-hidden="true">
+    <div class="auth-card anim" data-animate="pop">
+      <h2>Sign in to APKSecure</h2>
+      <form id="otpRequestForm" class="auth-form">
+        <label>Email</label>
+        <input type="email" id="authEmail" placeholder="you@company.com" required />
+        <button type="submit" class="btn primary">Send Code</button>
+      </form>
+      <form id="otpVerifyForm" class="auth-form" hidden>
+        <label>Enter the 6-digit code</label>
+        <input type="text" id="authCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="123456" required />
+        <button type="submit" class="btn primary">Verify & Continue</button>
+        <button type="button" class="btn ghost" id="resendCode">Resend Code</button>
+      </form>
+      <p class="auth-help" id="authHelp">We will email a one-time code to your address.</p>
+    </div>
+  </div>
+
+  <div class="risk-overlay" id="riskOverlay" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="risk-card anim" data-animate="pop">
+      <h3>High Risk Detected</h3>
+      <p id="riskMessage">This application shows extremely high privacy risk. We recommend uninstalling and using a trusted alternative.</p>
+      <div class="risk-actions">
+        <button class="btn primary" id="riskAcknowledge">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert-overlay" id="alertOverlay" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="alert-card anim" data-animate="pop">
+      <h3>Invalid URL</h3>
+      <p id="alertMessage">Invalid or wrong URL.</p>
+      <div class="risk-actions">
+        <button class="btn primary" id="alertAcknowledge">OK</button>
+      </div>
+    </div>
+  </div>
+
   <main class="page">
     <header class="page-header anim" data-animate="fade-up">
       <div class="brand">
@@ -19,6 +57,7 @@
           <p>Permission Analyzer Prototype</p>
         </div>
       </div>
+      <button class="btn ghost" id="logoutBtn" hidden>Logout</button>
     </header>
 
     <section class="analyzer">
@@ -64,17 +103,14 @@
           <ul id="dangerPermList"></ul>
         </article>
         <article class="perm-card perm-normal anim" data-animate="fade-up">
-          <h4>Expected / Normal Requests</h4>
+          <h4>Expected Requests</h4>
           <ul id="normalPermList"></ul>
         </article>
       </div>
 
-      
 
-      
     </section>
 
-    
 
       <footer class="page-footer">
         <p>@All rights reserved. NSM Connection</p>

@@ -17,6 +17,23 @@ const mitigationList = document.getElementById('mitigationList');
 const visualSummary = document.getElementById('visualSummary');
 const feedList = document.getElementById('feedList');
 const feedTimestamp = document.getElementById('feedTimestamp');
+// Auth elements
+const authOverlay = document.getElementById('authOverlay');
+const otpRequestForm = document.getElementById('otpRequestForm');
+const otpVerifyForm = document.getElementById('otpVerifyForm');
+const authEmail = document.getElementById('authEmail');
+const authCode = document.getElementById('authCode');
+const resendCodeBtn = document.getElementById('resendCode');
+const authHelp = document.getElementById('authHelp');
+const logoutBtn = document.getElementById('logoutBtn');
+// Risk dialog
+const riskOverlay = document.getElementById('riskOverlay');
+const riskMessage = document.getElementById('riskMessage');
+const riskAcknowledge = document.getElementById('riskAcknowledge');
+// Alert overlay
+const alertOverlay = document.getElementById('alertOverlay');
+const alertMessage = document.getElementById('alertMessage');
+const alertAcknowledge = document.getElementById('alertAcknowledge');
 
 const FEED_REFRESH_MS = 15000;
 
@@ -155,7 +172,26 @@ const fetchThreatFeed = async () => {
 
 analyzerForm.addEventListener('submit', async (event) => {
   event.preventDefault();
-  const pkg = extractPackageName(packageInput.value) || 'com.example.calculatorplus';
+  const raw = (packageInput.value || '').trim();
+  // If user enters a URL, validate it's a Play Store details link with id param
+  let pkg = '';
+  let isUrl = false;
+  try {
+    const parsed = new URL(raw);
+    isUrl = true;
+    const hostOk = /(^|\.)play\.google\.com$/.test(parsed.hostname);
+    const hasId = parsed.searchParams.get('id');
+    const detailsPath = /\/store\/apps\/details/.test(parsed.pathname);
+    if (!hostOk || !hasId || !detailsPath) {
+      showAlert('Invalid or wrong URL. Please paste a Play Store app link.');
+      return;
+    }
+    pkg = hasId;
+  } catch (_) {
+    // Not a URL: reject and prompt user to paste a valid Play Store URL
+    showAlert('Invalid or wrong URL. Please paste a Play Store app link.');
+    return;
+  }
   toggleReport(false);
 
   try {
@@ -174,6 +210,7 @@ analyzerForm.addEventListener('submit', async (event) => {
     analysisSummary.textContent = result.analysis_summary || '';
     analysisTimestamp.textContent = formatTimestamp(result.generated_at);
     if (usageAdvice) usageAdvice.textContent = result.usage_advice || '';
+    maybeShowRiskDialog(result);
 
     renderPermissionList(dangerPermList, result.permissions?.dangerous || []);
     renderPermissionList(normalPermList, result.permissions?.normal || []);
@@ -218,6 +255,7 @@ try {
           analysisSummary.textContent = p.analysis_summary || '';
           analysisTimestamp.textContent = (p.generated_at ? `Generated ${new Date(p.generated_at).toLocaleString()}` : analysisTimestamp.textContent);
           if (usageAdvice) usageAdvice.textContent = p.usage_advice || usageAdvice.textContent;
+          maybeShowRiskDialog(p);
           renderPermissionList(dangerPermList, p.permissions?.dangerous || []);
           renderPermissionList(normalPermList, p.permissions?.normal || []);
           renderDataFlow(dataFlow, p.threat_flow || []);
@@ -249,3 +287,124 @@ function triggerReveal() {
 }
 
 triggerReveal();
+
+// --- Auth ---
+async function checkAuth() {
+  try {
+    const res = await fetch('/auth/status');
+    const data = await res.json();
+    const authed = !!data.authenticated;
+    authOverlay.setAttribute('aria-hidden', authed ? 'true' : 'false');
+    if (logoutBtn) logoutBtn.hidden = !authed;
+  } catch (_) {
+    // If status check fails, require login by default
+    authOverlay.setAttribute('aria-hidden', 'false');
+    if (logoutBtn) logoutBtn.hidden = true;
+  }
+}
+
+checkAuth();
+
+if (otpRequestForm) {
+  otpRequestForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = (authEmail.value || '').trim();
+    if (!email) return;
+    authHelp.textContent = 'Sending code...';
+    const res = await fetch('/auth/request-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      authHelp.textContent = 'Check your email for the 6-digit code.';
+      otpVerifyForm.hidden = false;
+      authCode.focus();
+    } else {
+      authHelp.textContent = data.error || 'Failed to send code.';
+    }
+  });
+}
+
+if (otpVerifyForm) {
+  otpVerifyForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = (authEmail.value || '').trim();
+    const code = (authCode.value || '').trim();
+    if (!email || !code) return;
+    authHelp.textContent = 'Verifying...';
+    const res = await fetch('/auth/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      authOverlay.setAttribute('aria-hidden', 'true');
+      authHelp.textContent = '';
+      if (logoutBtn) logoutBtn.hidden = false;
+    } else {
+      authHelp.textContent = data.error || 'Invalid code.';
+    }
+  });
+}
+
+if (resendCodeBtn) {
+  resendCodeBtn.addEventListener('click', () => {
+    otpRequestForm.dispatchEvent(new Event('submit'));
+  });
+}
+
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', async () => {
+    try {
+      await fetch('/auth/logout', { method: 'POST' });
+    } catch (_) {}
+    if (logoutBtn) logoutBtn.hidden = true;
+    authOverlay.setAttribute('aria-hidden', 'false');
+  });
+}
+
+// --- Risk dialog helpers ---
+function maybeShowRiskDialog(payload) {
+  try {
+    const level = (payload.risk_level || '').toLowerCase();
+    const score = Number(payload.risk_score || 0);
+    if (level === 'critical' && score >= 80 && riskOverlay) {
+      if (riskMessage) {
+        riskMessage.textContent = `High risk for ${payload.app_name || payload.package}: score ${Math.round(score)}/100. We recommend uninstalling and using a trusted alternative.`;
+      }
+      riskOverlay.setAttribute('aria-hidden', 'false');
+    }
+  } catch (_) {}
+}
+
+if (riskAcknowledge && riskOverlay) {
+  const closeRisk = () => riskOverlay.setAttribute('aria-hidden', 'true');
+  riskAcknowledge.addEventListener('click', closeRisk);
+  riskOverlay.addEventListener('click', (e) => {
+    if (e.target === riskOverlay) closeRisk();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeRisk();
+  });
+}
+
+// --- Alert dialog helpers ---
+function showAlert(message) {
+  if (!alertOverlay) return;
+  if (alertMessage) alertMessage.textContent = message || 'Invalid or wrong URL.';
+  alertOverlay.setAttribute('aria-hidden', 'false');
+}
+
+if (alertAcknowledge && alertOverlay) {
+  const closeAlert = () => alertOverlay.setAttribute('aria-hidden', 'true');
+  alertAcknowledge.addEventListener('click', closeAlert);
+  alertOverlay.addEventListener('click', (e) => {
+    if (e.target === alertOverlay) closeAlert();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeAlert();
+  });
+}

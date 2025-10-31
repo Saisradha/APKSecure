@@ -1,14 +1,26 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import json
 import queue
 import random
 import threading
 import time
 
-from flask import Flask, Response, jsonify, render_template, request
+import os
+import smtplib
+from email.mime.text import MIMEText
 
+from flask import Flask, Response, jsonify, render_template, request, session
+
+
+# Load .env if available
+try:
+    from dotenv import load_dotenv  # type: ignore
+    load_dotenv()
+except Exception:
+    pass
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('APKSECURE_SECRET', 'dev-secret-change-me')
 
 
 def _now_iso():
@@ -364,6 +376,81 @@ def sse_events():
         'X-Accel-Buffering': 'no',
         'Connection': 'keep-alive',
     })
+
+
+# --- OTP Email Auth (simple, in-memory store) ---
+_otp_store: dict[str, dict] = {}
+
+
+def _send_email(to_email: str, subject: str, body: str) -> bool:
+    host = os.environ.get('SMTP_HOST')
+    port = int(os.environ.get('SMTP_PORT', '587'))
+    user = os.environ.get('SMTP_USER')
+    pwd = os.environ.get('SMTP_PASS')
+    from_addr = os.environ.get('SMTP_FROM', user or 'no-reply@apksecure.local')
+
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = from_addr
+    msg['To'] = to_email
+
+    try:
+        if not host or not user or not pwd:
+            # Fallback: log OTP to console
+            print(f"[OTP] To={to_email} Subject={subject} Body={body}")
+            return True
+        with smtplib.SMTP(host, port) as server:
+            server.starttls()
+            server.login(user, pwd)
+            server.sendmail(from_addr, [to_email], msg.as_string())
+        return True
+    except Exception as exc:
+        print(f"Failed to send email: {exc}")
+        return False
+
+
+@app.get('/auth/status')
+def auth_status():
+    user = session.get('user')
+    return jsonify({'authenticated': bool(user), 'email': user})
+
+
+@app.post('/auth/request-otp')
+def auth_request_otp():
+    data = request.get_json(silent=True) or {}
+    email = (data.get('email') or '').strip()
+    if not email or '@' not in email:
+        return jsonify({'ok': False, 'error': 'Invalid email'}), 400
+    code = f"{random.randint(100000, 999999)}"
+    _otp_store[email] = {'code': code, 'exp': datetime.now(timezone.utc) + timedelta(minutes=5)}
+    sent = _send_email(email, 'Your APKSecure login code', f'Your one-time code is: {code}\n\nIt expires in 5 minutes.')
+    return jsonify({'ok': bool(sent)})
+
+
+@app.post('/auth/verify')
+def auth_verify():
+    data = request.get_json(silent=True) or {}
+    email = (data.get('email') or '').strip()
+    code = (data.get('code') or '').strip()
+    entry = _otp_store.get(email)
+    now = datetime.now(timezone.utc)
+    if not entry or entry['exp'] < now:
+        return jsonify({'ok': False, 'error': 'Code expired'}), 400
+    if entry['code'] != code:
+        return jsonify({'ok': False, 'error': 'Invalid code'}), 400
+    session['user'] = email
+    # clear used code
+    try:
+        del _otp_store[email]
+    except Exception:
+        pass
+    return jsonify({'ok': True})
+
+
+@app.post('/auth/logout')
+def auth_logout():
+    session.pop('user', None)
+    return jsonify({'ok': True})
 
 
 if __name__ == '__main__':
