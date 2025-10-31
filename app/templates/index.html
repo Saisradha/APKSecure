@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>APKSecure: Permission Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <main class="page">
+    <header class="page-header anim" data-animate="fade-up">
+      <div class="brand">
+        <span class="brand-icon">🔐</span>
+        <div>
+          <h1>APKSecure</h1>
+          <p>Permission Analyzer Prototype</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="analyzer">
+      <div class="intro">
+        <h2>Permission risk check.</h2>
+        <p class="helper">APKSecure inspects requested permissions, compares them to what the app truly needs, and warns when privacy is at stake.</p>
+      </div>
+
+      <form class="input-panel anim" data-animate="fade-up" id="analyzerForm">
+        <label for="packageInput">Play Store App Package Name</label>
+        <div class="input-row">
+          <input id="packageInput" name="package" type="text" placeholder="com.example.calculatorplus" autocomplete="off" required />
+          <button class="btn primary" type="submit" id="analyzeBtn">Analyze App</button>
+        </div>
+        
+      </form>
+    </section>
+
+    <section class="report" id="report" hidden>
+      <header class="report-header anim" data-animate="fade-up">
+        <div>
+          <p class="report-label">Analysis Complete</p>
+          <h2 id="reportTitle">Calculator Plus</h2>
+          <p class="report-subtitle" id="reportSubtitle">Package ID: com.example.calculatorplus</p>
+        </div>
+        <div class="score-card anim" data-animate="pop" id="scoreCard">
+          <span class="score-value" id="scoreValue">Privacy Risk 8/10</span>
+          <span class="score-tag" id="scoreTag">Critical</span>
+        </div>
+      </header>
+
+      <div class="verdict anim" data-animate="fade-up">
+        <h3>Verdict</h3>
+        <p id="verdictText">Excessive &amp; dangerous permissions detected for core calculator functionality. Sensitive user data could be exfiltrated.</p>
+        <p class="verdict-meta" id="analysisSummary">The requested permissions exceed what a baseline calculator needs, signalling data harvesting behavior.</p>
+        <p class="verdict-timestamp" id="analysisTimestamp">Generated just now.</p>
+        <p class="verdict-meta" id="usageAdvice"></p>
+      </div>
+
+      <div class="permissions-grid">
+        <article class="perm-card perm-danger anim" data-animate="fade-up">
+          <h4>Unrelated / Dangerous Requests</h4>
+          <ul id="dangerPermList"></ul>
+        </article>
+        <article class="perm-card perm-normal anim" data-animate="fade-up">
+          <h4>Expected / Normal Requests</h4>
+          <ul id="normalPermList"></ul>
+        </article>
+      </div>
+
+      
+
+      
+    </section>
+
+    
+
+      <footer class="page-footer">
+        <p>@All rights reserved. NSM Connection</p>
+      </footer>
+  </main>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
