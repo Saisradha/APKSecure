@@ -10,6 +10,7 @@ import smtplib
 from email.mime.text import MIMEText
 
 from flask import Flask, Response, jsonify, render_template, request, session
+from flask_cors import CORS
 
 
 # Load .env if available
@@ -21,6 +22,12 @@ except Exception:
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('APKSECURE_SECRET', 'dev-secret-change-me')
+allowed_origin = os.environ.get('ALLOW_ORIGIN', '*')
+CORS(
+    app,
+    resources={r"/auth/*": {"origins": allowed_origin}, r"/api/*": {"origins": allowed_origin}, r"/events": {"origins": allowed_origin}},
+    supports_credentials=True,
+)
 
 
 def _now_iso():
@@ -324,6 +331,11 @@ def _sse_format(data: dict, event: str | None = None) -> str:
 @app.route('/')
 def home():
     return render_template('index.html')
+
+
+@app.get('/health')
+def health():
+    return jsonify({"status": "ok", "time": _now_iso()})
 
 
 @app.get('/api/scan')
