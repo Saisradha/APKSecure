@@ -416,15 +416,46 @@ def _send_email(to_email: str, subject: str, body: str) -> bool:
             print(f"ERROR: SMTP_USER and SMTP_PASS must be set for Gmail. OTP for {to_email}: {otp_code}")
             return False
         
-        with smtplib.SMTP(host, port) as server:
-            server.starttls()
-            server.login(user, pwd)
-            server.sendmail(from_addr, [to_email], msg.as_string())
-        print(f"Email sent successfully to {to_email}")
-        return True
+        # Try the configured port first, with fallback
+        if port == 465:
+            # Port 465 requires SSL from the start
+            print(f"Attempting SMTP connection to {host}:{port} (SSL)")
+            with smtplib.SMTP_SSL(host, port, timeout=30) as server:
+                server.login(user, pwd)
+                server.sendmail(from_addr, [to_email], msg.as_string())
+            print(f"Email sent successfully to {to_email} via port {port} (SSL)")
+            return True
+        else:
+            # Port 587 uses STARTTLS
+            try:
+                print(f"Attempting SMTP connection to {host}:{port} (STARTTLS)")
+                with smtplib.SMTP(host, port, timeout=30) as server:
+                    server.starttls()
+                    server.login(user, pwd)
+                    server.sendmail(from_addr, [to_email], msg.as_string())
+                print(f"Email sent successfully to {to_email} via port {port}")
+                return True
+            except (OSError, ConnectionError) as e:
+                # If port 587 fails with network error, try port 465 with SSL as fallback
+                print(f"Port {port} failed ({e}), trying port 465 with SSL...")
+                try:
+                    with smtplib.SMTP_SSL(host, 465, timeout=30) as server:
+                        server.login(user, pwd)
+                        server.sendmail(from_addr, [to_email], msg.as_string())
+                    print(f"Email sent successfully to {to_email} via port 465 (SSL fallback)")
+                    return True
+                except Exception as ssl_exc:
+                    print(f"Port 465 (SSL) also failed: {ssl_exc}")
+                    raise e  # Re-raise original error
+                
     except smtplib.SMTPAuthenticationError as exc:
         print(f"Gmail authentication failed: {exc}")
         print(f"Make sure you're using an App Password, not your regular Gmail password.")
+        return False
+    except (OSError, ConnectionError) as exc:
+        print(f"Network error connecting to Gmail SMTP: {exc}")
+        print(f"This might be a firewall/network restriction. Render free tier may block SMTP connections.")
+        print(f"Consider using an email service like SendGrid, Mailgun, or AWS SES for production.")
         return False
     except Exception as exc:
         print(f"Failed to send email to {to_email}: {exc}")
