@@ -48,6 +48,16 @@
           </div>
         </div>
 
+  <!-- Navigation Sidebar (Left) -->
+  <nav class="nav-sidebar">
+    <button class="nav-btn nav-back" id="navBack" title="Go Back">
+      <span>←</span>
+    </button>
+    <button class="nav-btn nav-forward" id="navForward" title="Go Forward">
+      <span>→</span>
+    </button>
+  </nav>
+
   <main class="page">
     <header class="page-header anim" data-animate="fade-up">
       <div class="brand">
@@ -57,26 +67,61 @@
           <p>Permission Analyzer Prototype</p>
         </div>
       </div>
-      <button class="btn ghost" id="logoutBtn" hidden>Logout</button>
+      <nav class="top-nav">
+        <button class="nav-link" id="navHome">Home</button>
+        <button class="nav-link" id="navWebsite">Website Checker</button>
+        <button class="nav-link" id="navAbout">About</button>
+        <button class="nav-link" id="navContact">Contact Us</button>
+        <button class="btn ghost" id="logoutBtn" hidden>Logout</button>
+      </nav>
     </header>
 
-    <section class="analyzer">
+    <!-- Platform Selection Frame -->
+    <section class="frame platform-selection anim" data-animate="fade-up" id="platformSelection">
+      <h2 style="grid-column: 1 / -1; margin-bottom: 8px; font-size: 1.8rem; font-weight: 700;">Choose the platform to check the risk</h2>
+      <div class="platform-btn" id="playstoreBtn">
+        <h3>📱 PlayStore</h3>
+        <p>Analyze Android app permissions from Google Play Store</p>
+      </div>
+      <div class="platform-btn" id="websiteBtn">
+        <h3>🌐 Website Check</h3>
+        <p>Check website security and privacy risks</p>
+      </div>
+    </section>
+
+    <!-- PlayStore Analyzer Frame -->
+    <section class="analyzer frame anim" data-animate="fade-up" id="analyzerSection" style="display: none;">
       <div class="intro">
         <h2>Permission risk check.</h2>
         <p class="helper">APKSecure inspects requested permissions, compares them to what the app truly needs, and warns when privacy is at stake.</p>
       </div>
 
-      <form class="input-panel anim" data-animate="fade-up" id="analyzerForm">
+      <form class="input-panel" id="analyzerForm">
         <label for="packageInput">Play Store App Package Name</label>
         <div class="input-row">
           <input id="packageInput" name="package" type="text" placeholder="com.example.calculatorplus" autocomplete="off" required />
           <button class="btn primary" type="submit" id="analyzeBtn">Analyze App</button>
         </div>
-        
       </form>
     </section>
 
-    <section class="report" id="report" hidden>
+    <!-- Website Checker Frame -->
+    <section class="analyzer frame anim" data-animate="fade-up" id="websiteSection" style="display: none;">
+      <div class="intro">
+        <h2>Website Checker</h2>
+        <p class="helper">Analyze website security, privacy policies, and potential risks.</p>
+      </div>
+
+      <form class="input-panel" id="websiteForm">
+        <label for="websiteInput">Website URL</label>
+        <div class="input-row">
+          <input id="websiteInput" name="website" type="text" placeholder="www.example.com or https://example.com" autocomplete="off" required />
+          <button class="btn primary" type="submit" id="analyzeWebsiteBtn">Analyze Website</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="report frame" id="report" style="display: none;">
       <header class="report-header anim" data-animate="fade-up">
         <div>
           <p class="report-label">Analysis Complete</p>
@@ -111,6 +156,212 @@
 
     </section>
 
+
+    <!-- About Page -->
+    <section class="about-page frame anim" id="aboutPage" style="display: none;">
+      <div class="about-hero">
+        <div class="about-icon-large">🔐</div>
+        <h2>About APKSecure</h2>
+        <p class="about-subtitle">Advanced Permission Analysis & Privacy Risk Assessment Platform</p>
+      </div>
+      
+      <div class="about-content">
+        <div class="about-section">
+          <h3>What is APKSecure?</h3>
+          <p>APKSecure is a cutting-edge web application designed to analyze Android application permissions and assess privacy risks. Built with advanced machine learning algorithms, our platform helps users make informed decisions about the apps they install by providing detailed insights into permission requests, data access patterns, and potential security vulnerabilities.</p>
+          <p>In today's digital landscape, mobile applications often request extensive permissions that may exceed their functional requirements. APKSecure bridges this knowledge gap by analyzing these permissions in real-time and comparing them against baseline expectations, helping users understand what data an app can access and whether those permissions are justified.</p>
+        </div>
+        
+        <div class="about-section">
+          <h3>Our Mission</h3>
+          <p>Our mission is to empower users with transparency and control over their mobile privacy. In an era where mobile apps request extensive permissions, users often unknowingly grant access to sensitive data including contacts, location, camera, microphone, and personal information. APKSecure bridges the knowledge gap by:</p>
+          <ul class="mission-list">
+            <li>Analyzing app permissions in real-time before installation</li>
+            <li>Comparing requested permissions against expected usage patterns</li>
+            <li>Identifying potential privacy risks and security vulnerabilities</li>
+            <li>Providing actionable recommendations for data protection</li>
+            <li>Educating users about permission best practices</li>
+          </ul>
+        </div>
+        
+        <div class="about-section">
+          <h3>Key Features</h3>
+          <div class="features-grid">
+            <div class="feature-card">
+              <div class="feature-icon">🔍</div>
+              <h4>Permission Analysis</h4>
+              <p>Deep analysis of Android app permissions with detailed explanations of each permission's purpose and potential risks. We categorize permissions into dangerous, normal, and signature-level types.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">📊</div>
+              <h4>Risk Scoring</h4>
+              <p>Intelligent risk assessment algorithm that evaluates apps based on requested permissions, providing scores from Guarded (safe) to Critical (high risk). Scores range from 0-100 based on permission abuse potential.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🎯</div>
+              <h4>Profile-Based Detection</h4>
+              <p>Context-aware analysis that considers app categories (finance, messaging, media, system tools, etc.) to provide accurate risk assessments tailored to each app type.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">📈</div>
+              <h4>Threat Flow Visualization</h4>
+              <p>Visual representation of data flow from device to external servers, highlighting potential data exfiltration paths and security vulnerabilities.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🛡️</div>
+              <h4>Mitigation Recommendations</h4>
+              <p>Actionable advice on how to protect your data, including specific permission revocations, security best practices, and alternative app recommendations.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">⚡</div>
+              <h4>Real-time Analysis</h4>
+              <p>Instant results with detailed reports generated using advanced machine learning models trained on permission patterns and threat intelligence databases.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="about-section">
+          <h3>How It Works</h3>
+          <p>APKSecure uses a sophisticated multi-stage analysis process to evaluate Android applications:</p>
+          <div class="process-steps">
+            <div class="process-step">
+              <div class="step-number">1</div>
+              <div class="step-content">
+                <h4>Package Extraction</h4>
+                <p>Extracts and categorizes all requested permissions from the app package or Play Store listing, including normal, dangerous, and signature permissions.</p>
+              </div>
+            </div>
+            <div class="process-step">
+              <div class="step-number">2</div>
+              <div class="step-content">
+                <h4>Profile Detection</h4>
+                <p>Identifies the app's functional profile using AI-powered categorization (calculator, banking app, social media, camera app, etc.) to establish baseline permission expectations.</p>
+              </div>
+            </div>
+            <div class="process-step">
+              <div class="step-number">3</div>
+              <div class="step-content">
+                <h4>Permission Comparison</h4>
+                <p>Compares requested permissions against expected permissions for that profile, flagging anomalies and excessive permission requests that don't align with the app's declared functionality.</p>
+              </div>
+            </div>
+            <div class="process-step">
+              <div class="step-number">4</div>
+              <div class="step-content">
+                <h4>Risk Assessment</h4>
+                <p>Flags dangerous or unrelated permissions that could indicate malicious behavior, data harvesting, or privacy violations. Assigns risk levels based on permission severity and context.</p>
+              </div>
+            </div>
+            <div class="process-step">
+              <div class="step-number">5</div>
+              <div class="step-content">
+                <h4>Report Generation</h4>
+                <p>Generates a comprehensive risk score and detailed report with actionable recommendations, threat visualizations, and mitigation strategies tailored to the specific app and user context.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="about-section">
+          <h3>Technology & Security</h3>
+          <p>APKSecure is built using state-of-the-art technologies:</p>
+          <ul class="tech-list">
+            <li><strong>Machine Learning Models:</strong> Advanced algorithms trained on thousands of app permission patterns to accurately detect anomalies and potential threats.</li>
+            <li><strong>Real-time Processing:</strong> Fast analysis engine that provides results within seconds without compromising accuracy.</li>
+            <li><strong>Privacy-First Architecture:</strong> All analyses are performed securely, and we do not store or share user data or analysis history.</li>
+            <li><strong>Industry Standards:</strong> Our platform uses industry-standard security practices including encryption, secure APIs, and compliance with data protection regulations.</li>
+            <li><strong>Continuous Updates:</strong> Regular updates to our threat intelligence database and ML models to stay ahead of evolving security threats.</li>
+          </ul>
+        </div>
+        
+        <div class="about-section">
+          <h3>Use Cases</h3>
+          <div class="usecases-grid">
+            <div class="usecase-item">
+              <strong>👤 Personal Users</strong>
+              <p>Check apps before installation to protect your privacy. Understand what permissions an app needs and whether those requests are reasonable.</p>
+            </div>
+            <div class="usecase-item">
+              <strong>🏢 IT Administrators</strong>
+              <p>Evaluate apps for enterprise deployment. Ensure company data remains secure and apps comply with organizational security policies.</p>
+            </div>
+            <div class="usecase-item">
+              <strong>💻 Developers</strong>
+              <p>Verify your app's permission requests align with best practices. Optimize permission usage and improve user trust.</p>
+            </div>
+            <div class="usecase-item">
+              <strong>🔬 Security Researchers</strong>
+              <p>Identify potentially malicious apps and permission abuse patterns. Contribute to the security research community.</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="about-footer">
+          <div class="footer-content">
+            <h3>Empowering Digital Privacy</h3>
+            <p>APKSecure is committed to making mobile privacy accessible and understandable for everyone. We believe that users should have complete transparency about what data their apps can access and how to protect themselves.</p>
+            <p class="copyright">© 2025 APKSecure. All rights reserved. NSM Connection</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact Us Page -->
+    <section class="contact-page frame anim" id="contactPage" style="display: none;">
+      <div class="contact-container">
+        <div class="contact-info">
+          <div class="contact-phone-icon">📞</div>
+          <div class="contact-details">
+            <div class="contact-item">
+              <span class="contact-icon-small">📍</span>
+              <div class="contact-text">
+                <strong>Address</strong>
+                <p>NSM Connection Headquarters<br>Ramat Gan, Israel</p>
+              </div>
+            </div>
+            <div class="contact-item">
+              <span class="contact-icon-small">✉️</span>
+              <div class="contact-text">
+                <strong>Email</strong>
+                <p>support@apksecure.io</p>
+              </div>
+            </div>
+            <div class="contact-item">
+              <span class="contact-icon-small">📱</span>
+              <div class="contact-text">
+                <strong>Phone</strong>
+                <p>+1 (555) 123-4567</p>
+              </div>
+            </div>
+          </div>
+          <div class="contact-note">
+            <p>If you need help with APKSecure, have questions about security analysis, or want to discuss partnership opportunities, use the following information to contact us.</p>
+            <p class="response-time">E-mail responses are answered within 24 hours.</p>
+          </div>
+        </div>
+        
+        <div class="contact-form-section">
+          <h2>Contact Us</h2>
+          <form class="contact-form" id="contactForm">
+            <div class="form-row">
+              <div class="form-group">
+                <input type="text" id="firstName" name="firstName" placeholder="First Name" required />
+              </div>
+              <div class="form-group">
+                <input type="text" id="lastName" name="lastName" placeholder="Last Name" required />
+              </div>
+            </div>
+            <div class="form-group">
+              <input type="email" id="contactEmail" name="email" placeholder="E-mail" required />
+            </div>
+            <div class="form-group">
+              <textarea id="contactMessage" name="message" rows="6" placeholder="Message" required></textarea>
+            </div>
+            <button type="submit" class="btn contact-submit">SUBMIT</button>
+          </form>
+        </div>
+      </div>
+    </section>
 
       <footer class="page-footer">
         <p>@All rights reserved. NSM Connection</p>

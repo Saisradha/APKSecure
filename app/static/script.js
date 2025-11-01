@@ -58,9 +58,14 @@ const extractPackageName = (value) => {
 
 const toggleReport = (visible) => {
   if (!report) return;
-  report.hidden = !visible;
   if (visible) {
-    report.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    report.style.display = 'grid';
+    // Scroll to report smoothly after a brief delay
+    setTimeout(() => {
+      report.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
+  } else {
+    report.style.display = 'none';
   }
 };
 
@@ -170,65 +175,78 @@ const fetchThreatFeed = async () => {
   }
 };
 
-analyzerForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const raw = (packageInput.value || '').trim();
-  // If user enters a URL, validate it's a Play Store details link with id param
-  let pkg = '';
-  let isUrl = false;
-  try {
-    const parsed = new URL(raw);
-    isUrl = true;
-    const hostOk = /(^|\.)play\.google\.com$/.test(parsed.hostname);
-    const hasId = parsed.searchParams.get('id');
-    const detailsPath = /\/store\/apps\/details/.test(parsed.pathname);
-    if (!hostOk || !hasId || !detailsPath) {
-      showAlert('Invalid or wrong URL. Please paste a Play Store app link.');
+if (analyzerForm) {
+  analyzerForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const raw = (packageInput?.value || '').trim();
+    if (!raw) {
+      showAlert('Please enter a package name or Play Store URL.');
       return;
     }
-    pkg = hasId;
-  } catch (_) {
-    // Not a URL: reject and prompt user to paste a valid Play Store URL
-    showAlert('Invalid or wrong URL. Please paste a Play Store app link.');
-    return;
-  }
-  toggleReport(false);
-
-  try {
-    const result = await fetchScan(pkg);
-
-    reportTitle.textContent = result.app_name || result.package;
-    if (reportSubtitle) {
-      reportSubtitle.textContent = `Package ID: ${result.package}`;
+    
+    // Extract package name from URL or use as-is (original logic)
+    let pkg = extractPackageName(raw);
+    if (!pkg) {
+      pkg = raw; // Fallback to raw input
+    }
+    
+    toggleReport(false);
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    if (analyzeBtn) {
+      analyzeBtn.disabled = true;
+      analyzeBtn.textContent = 'Analyzing...';
     }
 
-    scoreValue.textContent = result.risk_score_text || `Privacy Risk ${Math.round(result.risk_score || 0)}`;
-    scoreTag.textContent = result.risk_level || 'Unknown';
-    applyRiskStyling(result.risk_level);
+    try {
+      const result = await fetchScan(pkg);
 
-    verdictText.textContent = result.verdict || 'Risk verdict unavailable.';
-    analysisSummary.textContent = result.analysis_summary || '';
-    analysisTimestamp.textContent = formatTimestamp(result.generated_at);
-    if (usageAdvice) usageAdvice.textContent = result.usage_advice || '';
-    maybeShowRiskDialog(result);
+      reportTitle.textContent = result.app_name || result.package;
+      if (reportSubtitle) {
+        reportSubtitle.textContent = `Package ID: ${result.package}`;
+      }
 
-    renderPermissionList(dangerPermList, result.permissions?.dangerous || []);
-    renderPermissionList(normalPermList, result.permissions?.normal || []);
-    renderDataFlow(dataFlow, result.threat_flow || []);
-    renderMitigations(mitigationList, result.actions || []);
+      scoreValue.textContent = result.risk_score_text || `Privacy Risk ${Math.round(result.risk_score || 0)}`;
+      scoreTag.textContent = result.risk_level || 'Unknown';
+      applyRiskStyling(result.risk_level);
 
-    visualSummary.textContent = result.visual_summary || visualSummary.textContent;
+      verdictText.textContent = result.verdict || 'Risk verdict unavailable.';
+      analysisSummary.textContent = result.analysis_summary || '';
+      analysisTimestamp.textContent = formatTimestamp(result.generated_at);
+      if (usageAdvice) usageAdvice.textContent = result.usage_advice || '';
+      maybeShowRiskDialog(result);
 
-    toggleReport(true);
-    // Re-run animation for newly revealed elements
-    requestAnimationFrame(() => {
-      document.querySelectorAll('.anim').forEach((el) => el.classList.remove('in-view'));
-      triggerReveal();
-    });
-  } catch (error) {
-    toggleReport(false);
-  }
-});
+      renderPermissionList(dangerPermList, result.permissions?.dangerous || []);
+      renderPermissionList(normalPermList, result.permissions?.normal || []);
+      renderDataFlow(dataFlow, result.threat_flow || []);
+      renderMitigations(mitigationList, result.actions || []);
+
+      if (visualSummary) {
+        visualSummary.textContent = result.visual_summary || visualSummary.textContent;
+      }
+
+      toggleReport(true);
+      // Hide analyzer section and show report on same page
+      if (analyzerSection) analyzerSection.style.display = 'none';
+      // Add report to navigation history
+      addToHistory('report');
+      
+      // Re-run animation for newly revealed elements
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.anim').forEach((el) => el.classList.remove('in-view'));
+        triggerReveal();
+      });
+    } catch (error) {
+      toggleReport(false);
+      showAlert('Failed to analyze. Please try again.');
+      console.error('Analysis error:', error);
+    } finally {
+      if (analyzeBtn) {
+        analyzeBtn.disabled = false;
+        analyzeBtn.textContent = 'Analyze App';
+      }
+    }
+  });
+}
 
 if (feedList) {
   fetchThreatFeed();
@@ -407,4 +425,303 @@ if (alertAcknowledge && alertOverlay) {
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') closeAlert();
   });
+}
+
+// ===== Animated Cursor Effects =====
+function initCursor() {
+  if (window.innerWidth <= 768) return; // Skip on mobile
+  
+  const cursor = document.createElement('div');
+  cursor.className = 'cursor';
+  document.body.appendChild(cursor);
+  
+  const trails = [];
+  const trailCount = 15;
+  
+  for (let i = 0; i < trailCount; i++) {
+    const trail = document.createElement('div');
+    trail.className = 'cursor-trail';
+    document.body.appendChild(trail);
+    trails.push({ element: trail, delay: i * 50 });
+  }
+  
+  let mouseX = 0;
+  let mouseY = 0;
+  let cursorX = 0;
+  let cursorY = 0;
+  
+  document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  });
+  
+  // Smooth cursor follow
+  function animateCursor() {
+    cursorX += (mouseX - cursorX) * 0.15;
+    cursorY += (mouseY - cursorY) * 0.15;
+    
+    cursor.style.left = cursorX + 'px';
+    cursor.style.top = cursorY + 'px';
+    
+    // Trail effect
+    trails.forEach((trail, index) => {
+      setTimeout(() => {
+        const trailX = cursorX + (Math.random() - 0.5) * 20;
+        const trailY = cursorY + (Math.random() - 0.5) * 20;
+        trail.element.style.left = trailX + 'px';
+        trail.element.style.top = trailY + 'px';
+        trail.element.style.opacity = '0.3';
+        setTimeout(() => {
+          trail.element.style.opacity = '0';
+        }, 200);
+      }, trail.delay);
+    });
+    
+    requestAnimationFrame(animateCursor);
+  }
+  
+  animateCursor();
+  
+  // Hover effects
+  const interactiveElements = document.querySelectorAll('a, button, input, .platform-btn, .frame, .perm-card');
+  
+  interactiveElements.forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      cursor.classList.add('hover');
+    });
+    el.addEventListener('mouseleave', () => {
+      cursor.classList.remove('hover');
+    });
+    el.addEventListener('mousedown', () => {
+      cursor.classList.add('click');
+    });
+    el.addEventListener('mouseup', () => {
+      cursor.classList.remove('click');
+    });
+  });
+}
+
+// Initialize cursor when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCursor);
+} else {
+  initCursor();
+}
+
+// ===== Platform Selection =====
+const platformSelection = document.getElementById('platformSelection');
+const analyzerSection = document.getElementById('analyzerSection');
+const websiteSection = document.getElementById('websiteSection');
+const playstoreBtn = document.getElementById('playstoreBtn');
+const websiteBtn = document.getElementById('websiteBtn');
+const websiteForm = document.getElementById('websiteForm');
+
+if (playstoreBtn && analyzerSection) {
+  playstoreBtn.addEventListener('click', () => {
+    goToSection('analyzerSection');
+    navHome?.classList.add('active');
+    if (packageInput) packageInput.focus();
+  });
+}
+
+if (websiteBtn && websiteSection) {
+  websiteBtn.addEventListener('click', () => {
+    goToSection('websiteSection');
+    navWebsite?.classList.add('active');
+    navHome?.classList.remove('active');
+    const websiteInput = document.getElementById('websiteInput');
+    if (websiteInput) websiteInput.focus();
+  });
+}
+
+if (websiteForm) {
+  websiteForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const websiteInput = document.getElementById('websiteInput');
+    const analyzeWebsiteBtn = document.getElementById('analyzeWebsiteBtn');
+    let url = websiteInput?.value?.trim();
+    
+    if (!url) {
+      showAlert('Please enter a website URL.');
+      return;
+    }
+    
+    // Normalize URL - add protocol if missing
+    try {
+      // If it doesn't start with http:// or https://, add https://
+      if (!/^https?:\/\//i.test(url)) {
+        url = 'https://' + url;
+      }
+      // Validate it's a proper URL
+      new URL(url);
+    } catch (error) {
+      showAlert('Please enter a valid website URL (e.g., www.example.com or https://example.com)');
+      return;
+    }
+    
+    // Show loading state
+    if (analyzeWebsiteBtn) {
+      analyzeWebsiteBtn.disabled = true;
+      analyzeWebsiteBtn.textContent = 'Analyzing...';
+    }
+    
+    try {
+      // For now, show alert (you can implement website analysis later)
+      // In the future, you can call an API endpoint for website analysis
+      showAlert('Website analysis feature coming soon. For now, you can use PlayStore analysis for mobile apps.');
+    } catch (error) {
+      showAlert('Failed to analyze website. Please try again.');
+      console.error('Website analysis error:', error);
+    } finally {
+      if (analyzeWebsiteBtn) {
+        analyzeWebsiteBtn.disabled = false;
+        analyzeWebsiteBtn.textContent = 'Analyze Website';
+      }
+    }
+  });
+}
+
+// ===== Navigation =====
+const navBack = document.getElementById('navBack');
+const navForward = document.getElementById('navForward');
+const navHome = document.getElementById('navHome');
+const navWebsite = document.getElementById('navWebsite');
+const navAbout = document.getElementById('navAbout');
+const navContact = document.getElementById('navContact');
+
+// Navigation history
+let navHistory = [];
+let navHistoryIndex = -1;
+
+function addToHistory(section) {
+  navHistory = navHistory.slice(0, navHistoryIndex + 1);
+  navHistory.push(section);
+  navHistoryIndex = navHistory.length - 1;
+  updateNavButtons();
+}
+
+function goToSection(sectionId, addToHist = true) {
+  // Hide all sections
+  if (platformSelection) platformSelection.style.display = 'none';
+  if (analyzerSection) analyzerSection.style.display = 'none';
+  if (websiteSection) websiteSection.style.display = 'none';
+  if (report) report.style.display = 'none';
+  const aboutPage = document.getElementById('aboutPage');
+  const contactPage = document.getElementById('contactPage');
+  if (aboutPage) aboutPage.style.display = 'none';
+  if (contactPage) contactPage.style.display = 'none';
+  
+  // Show selected section
+  const section = document.getElementById(sectionId);
+  if (section) {
+    // Determine display type based on section
+    let displayType = 'block';
+    if (sectionId === 'analyzerSection' || sectionId === 'websiteSection' || sectionId === 'report' || sectionId === 'aboutPage') {
+      displayType = 'grid';
+    } else if (sectionId === 'platformSelection' || sectionId === 'contactPage') {
+      displayType = 'grid';
+    }
+    section.style.display = displayType;
+    if (addToHist) addToHistory(sectionId);
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function updateNavButtons() {
+  if (navBack) {
+    navBack.disabled = navHistoryIndex <= 0;
+    navBack.style.opacity = navHistoryIndex <= 0 ? '0.4' : '1';
+  }
+  if (navForward) {
+    navForward.disabled = navHistoryIndex >= navHistory.length - 1;
+    navForward.style.opacity = navHistoryIndex >= navHistory.length - 1 ? '0.4' : '1';
+  }
+}
+
+if (navBack) {
+  navBack.addEventListener('click', () => {
+    if (navHistoryIndex > 0) {
+      navHistoryIndex--;
+      goToSection(navHistory[navHistoryIndex], false);
+    }
+  });
+}
+
+if (navForward) {
+  navForward.addEventListener('click', () => {
+    if (navHistoryIndex < navHistory.length - 1) {
+      navHistoryIndex++;
+      goToSection(navHistory[navHistoryIndex], false);
+    }
+  });
+}
+
+if (navHome) {
+  navHome.addEventListener('click', () => {
+    goToSection('platformSelection');
+    navHome.classList.add('active');
+    navWebsite?.classList.remove('active');
+  });
+}
+
+if (navWebsite) {
+  navWebsite.addEventListener('click', () => {
+    if (websiteSection) {
+      goToSection('websiteSection');
+      navWebsite.classList.add('active');
+      navHome?.classList.remove('active');
+    }
+  });
+}
+
+const aboutPage = document.getElementById('aboutPage');
+const contactPage = document.getElementById('contactPage');
+
+if (navAbout) {
+  navAbout.addEventListener('click', () => {
+    goToSection('aboutPage');
+    navAbout.classList.add('active');
+    navHome?.classList.remove('active');
+    navWebsite?.classList.remove('active');
+    navContact?.classList.remove('active');
+  });
+}
+
+if (navContact) {
+  navContact.addEventListener('click', () => {
+    goToSection('contactPage');
+    navContact.classList.add('active');
+    navHome?.classList.remove('active');
+    navWebsite?.classList.remove('active');
+    navAbout?.classList.remove('active');
+  });
+}
+
+// Contact form submission
+const contactForm = document.getElementById('contactForm');
+if (contactForm) {
+  contactForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const firstName = document.getElementById('firstName')?.value;
+    const lastName = document.getElementById('lastName')?.value;
+    const email = document.getElementById('contactEmail')?.value;
+    const message = document.getElementById('contactMessage')?.value;
+    
+    if (!firstName || !lastName || !email || !message) {
+      showAlert('Please fill in all fields.');
+      return;
+    }
+    
+    // Here you would send the form data to your backend
+    // For now, we'll show a success message
+    showAlert('Thank you for contacting us! We will respond within 24 hours.');
+    contactForm.reset();
+  });
+}
+
+// Initialize navigation
+if (platformSelection) {
+  addToHistory('platformSelection');
 }
