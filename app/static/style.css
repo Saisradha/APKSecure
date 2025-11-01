@@ -1,4 +1,4 @@
-/* Elegant Frame-Based UI with Animated Cursor Effects */
+/* Elegant Frame-Based UI */
 :root {
   --bg-dark: #0a0a0f;
   --bg-darker: #050508;
@@ -31,8 +31,6 @@
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
   --shadow-glow: 0 0 30px rgba(167, 139, 250, 0.4);
-  
-  --cursor-size: 20px;
 }
 
 * {
@@ -56,43 +54,8 @@ body {
   color: var(--text-primary);
   font-family: 'Manrope', system-ui, -apple-system, sans-serif;
   position: relative;
-  cursor: none;
 }
 
-/* Animated Cursor */
-.cursor {
-  position: fixed;
-  width: var(--cursor-size);
-  height: var(--cursor-size);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9999;
-  mix-blend-mode: difference;
-  transition: transform 0.1s ease, background 0.2s ease;
-  background: radial-gradient(circle, rgba(167, 139, 250, 0.8), rgba(236, 72, 153, 0.6));
-  box-shadow: 0 0 20px rgba(167, 139, 250, 0.6);
-}
-
-.cursor-trail {
-  position: fixed;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9998;
-  background: rgba(167, 139, 250, 0.4);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.cursor.hover {
-  transform: scale(1.5);
-  background: radial-gradient(circle, rgba(0, 212, 255, 0.9), rgba(16, 185, 129, 0.7));
-  box-shadow: 0 0 30px rgba(0, 212, 255, 0.8);
-}
-
-.cursor.click {
-  transform: scale(0.8);
-}
 
 /* Page Layout */
 .page {
@@ -1277,16 +1240,8 @@ body {
   box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
 }
 
-/* Hide cursor on mobile */
+/* Responsive Styles */
 @media (max-width: 768px) {
-  body {
-    cursor: auto;
-  }
-  
-  .cursor, .cursor-trail {
-    display: none;
-  }
-  
   .nav-sidebar {
     display: none;
   }
