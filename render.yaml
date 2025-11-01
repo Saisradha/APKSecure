@@ -19,5 +19,7 @@ services:
         sync: false
       - key: SMTP_FROM
         sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
       - key: ALLOW_ORIGIN
         value: "*"

@@ -396,7 +396,41 @@ _otp_store: dict[str, dict] = {}
 
 
 def _send_email(to_email: str, subject: str, body: str) -> bool:
-    # Default to Gmail SMTP if not specified
+    """
+    Send email using SendGrid API (preferred) or SMTP fallback.
+    SendGrid uses HTTP/HTTPS and works on Render free tier.
+    """
+    # Try SendGrid API first (works on Render free tier - uses HTTP not SMTP)
+    sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
+    
+    if sendgrid_api_key:
+        try:
+            from sendgrid import SendGridAPIClient
+            from sendgrid.helpers.mail import Mail
+            
+            from_email = os.environ.get('SMTP_FROM', os.environ.get('SMTP_USER', 'noreply@apksecure.io'))
+            message = Mail(
+                from_email=from_email,
+                to_emails=to_email,
+                subject=subject,
+                plain_text_content=body
+            )
+            
+            sg = SendGridAPIClient(sendgrid_api_key)
+            response = sg.send(message)
+            if response.status_code in [200, 202]:
+                print(f"Email sent successfully to {to_email} via SendGrid")
+                return True
+            else:
+                print(f"SendGrid returned status {response.status_code}: {response.body}")
+                return False
+        except ImportError:
+            print("SendGrid package not installed. Install with: pip install sendgrid")
+        except Exception as exc:
+            print(f"SendGrid API error: {exc}")
+            # Fall through to SMTP
+    
+    # Fallback to SMTP (won't work on Render free tier, but works locally)
     host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
     port = int(os.environ.get('SMTP_PORT', '587'))
     user = os.environ.get('SMTP_USER')
@@ -413,7 +447,7 @@ def _send_email(to_email: str, subject: str, body: str) -> bool:
             # Try to extract OTP from email body for debugging
             otp_match = re.search(r'code is: (\d{6})', body)
             otp_code = otp_match.group(1) if otp_match else 'NOT FOUND'
-            print(f"ERROR: SMTP_USER and SMTP_PASS must be set for Gmail. OTP for {to_email}: {otp_code}")
+            print(f"ERROR: Either SENDGRID_API_KEY or SMTP_USER+SMTP_PASS must be set. OTP for {to_email}: {otp_code}")
             return False
         
         # Try the configured port first, with fallback
@@ -449,13 +483,12 @@ def _send_email(to_email: str, subject: str, body: str) -> bool:
                     raise e  # Re-raise original error
                 
     except smtplib.SMTPAuthenticationError as exc:
-        print(f"Gmail authentication failed: {exc}")
-        print(f"Make sure you're using an App Password, not your regular Gmail password.")
+        print(f"SMTP authentication failed: {exc}")
+        print(f"Make sure you're using an App Password, not your regular password.")
         return False
     except (OSError, ConnectionError) as exc:
-        print(f"Network error connecting to Gmail SMTP: {exc}")
-        print(f"This might be a firewall/network restriction. Render free tier may block SMTP connections.")
-        print(f"Consider using an email service like SendGrid, Mailgun, or AWS SES for production.")
+        print(f"Network error connecting to SMTP: {exc}")
+        print(f"Render free tier blocks SMTP ports. Use SENDGRID_API_KEY instead.")
         return False
     except Exception as exc:
         print(f"Failed to send email to {to_email}: {exc}")
