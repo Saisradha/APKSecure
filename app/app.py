@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 import json
 import queue
 import random
+import re
 import threading
 import time
 
@@ -395,7 +396,8 @@ _otp_store: dict[str, dict] = {}
 
 
 def _send_email(to_email: str, subject: str, body: str) -> bool:
-    host = os.environ.get('SMTP_HOST')
+    # Default to Gmail SMTP if not specified
+    host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
     port = int(os.environ.get('SMTP_PORT', '587'))
     user = os.environ.get('SMTP_USER')
     pwd = os.environ.get('SMTP_PASS')
@@ -407,17 +409,25 @@ def _send_email(to_email: str, subject: str, body: str) -> bool:
     msg['To'] = to_email
 
     try:
-        if not host or not user or not pwd:
-            # Fallback: log OTP to console
-            print(f"[OTP] To={to_email} Subject={subject} Body={body}")
-            return True
+        if not user or not pwd:
+            # Try to extract OTP from email body for debugging
+            otp_match = re.search(r'code is: (\d{6})', body)
+            otp_code = otp_match.group(1) if otp_match else 'NOT FOUND'
+            print(f"ERROR: SMTP_USER and SMTP_PASS must be set for Gmail. OTP for {to_email}: {otp_code}")
+            return False
+        
         with smtplib.SMTP(host, port) as server:
             server.starttls()
             server.login(user, pwd)
             server.sendmail(from_addr, [to_email], msg.as_string())
+        print(f"Email sent successfully to {to_email}")
         return True
+    except smtplib.SMTPAuthenticationError as exc:
+        print(f"Gmail authentication failed: {exc}")
+        print(f"Make sure you're using an App Password, not your regular Gmail password.")
+        return False
     except Exception as exc:
-        print(f"Failed to send email: {exc}")
+        print(f"Failed to send email to {to_email}: {exc}")
         return False
 
 
