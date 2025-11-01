@@ -446,7 +446,12 @@ def auth_request_otp():
     code = f"{random.randint(100000, 999999)}"
     _otp_store[email] = {'code': code, 'exp': datetime.now(timezone.utc) + timedelta(minutes=5)}
     sent = _send_email(email, 'Your APKSecure login code', f'Your one-time code is: {code}\n\nIt expires in 5 minutes.')
-    return jsonify({'ok': bool(sent)})
+    if not sent:
+        # Check if credentials are missing
+        if not os.environ.get('SMTP_USER') or not os.environ.get('SMTP_PASS'):
+            return jsonify({'ok': False, 'error': 'Email service not configured. Please set SMTP_USER and SMTP_PASS environment variables.'}), 500
+        return jsonify({'ok': False, 'error': 'Failed to send email. Please check server logs.'}), 500
+    return jsonify({'ok': True})
 
 
 @app.post('/auth/verify')
