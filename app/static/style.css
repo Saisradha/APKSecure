@@ -96,7 +96,8 @@ body {
 
 /* Page Layout */
 .page {
-  width: min(1200px, 95vw);
+  width: min(1200px, 100%);
+  max-width: 100%;
   margin: 0 auto;
   padding: 40px 20px 60px;
   display: grid;
@@ -645,33 +646,153 @@ body {
 /* Responsive */
 @media (max-width: 768px) {
   .page {
-    padding: 24px 16px 40px;
-    gap: 24px;
+    padding: 16px 12px 40px;
+    gap: 20px;
+    width: 100%;
+    max-width: 100%;
   }
   
   .frame {
-    padding: 24px;
+    padding: 20px 16px;
+    border-radius: var(--radius-lg);
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 20px;
+  }
+  
+  .brand {
+    width: 100%;
+  }
+  
+  .brand-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+  }
+  
+  .brand h1 {
+    font-size: 1.5rem;
+  }
+  
+  .brand p {
+    font-size: 0.85rem;
+  }
+  
+  .top-nav {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+  }
+  
+  .nav-link {
+    padding: 8px 14px;
+    font-size: 0.8rem;
+    flex: 1 1 auto;
+    min-width: 0;
   }
   
   .platform-selection {
     grid-template-columns: 1fr;
-    padding: 32px 24px;
+    padding: 24px 16px;
+    gap: 16px;
+  }
+  
+  .platform-selection h2 {
+    font-size: 1.4rem;
+    margin-bottom: 16px;
+  }
+  
+  .platform-btn {
+    padding: 28px 20px;
+  }
+  
+  .platform-btn h3 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+  
+  .platform-btn p {
+    font-size: 0.85rem;
   }
   
   .permissions-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
   
   .report-header {
     flex-direction: column;
+    gap: 16px;
+  }
+  
+  .score-card {
+    min-width: 100%;
+    text-align: left;
+    padding: 20px;
   }
   
   .input-row {
     flex-direction: column;
+    gap: 12px;
   }
   
-  .btn.primary {
+  .input-row input {
+    flex: 1 1 100%;
     width: 100%;
+    min-width: 0;
+  }
+  
+  .btn.primary,
+  .btn.ghost {
+    width: 100%;
+    padding: 14px 20px;
+  }
+  
+  .intro h2 {
+    font-size: 1.5rem;
+  }
+  
+  .intro .helper {
+    font-size: 0.9rem;
+  }
+  
+  .verdict {
+    padding-left: 16px;
+    border-left-width: 3px;
+  }
+  
+  .verdict h3 {
+    font-size: 1.1rem;
+  }
+  
+  .verdict p {
+    font-size: 0.9rem;
+  }
+  
+  .report-header h2 {
+    font-size: 1.4rem;
+  }
+  
+  .auth-card,
+  .risk-card,
+  .alert-card {
+    width: calc(100% - 32px);
+    padding: 24px 20px;
+    margin: 0 16px;
+  }
+  
+  .auth-card h2 {
+    font-size: 1.5rem;
+  }
+  
+  .auth-form input {
+    padding: 14px 16px;
+    font-size: 0.95rem;
   }
 }
 
@@ -1170,42 +1291,239 @@ body {
     display: none;
   }
   
-  .top-nav {
-    gap: 8px;
-  }
-  
-  .nav-link {
-    padding: 6px 12px;
-    font-size: 0.8rem;
-  }
-  
   .about-page {
-    padding: 32px 24px;
+    padding: 24px 16px;
+    gap: 32px;
+  }
+  
+  .about-hero h2 {
+    font-size: 1.8rem;
+  }
+  
+  .about-subtitle {
+    font-size: 1rem;
+  }
+  
+  .about-icon-large {
+    font-size: 3rem;
+  }
+  
+  .about-section h3 {
+    font-size: 1.3rem;
+  }
+  
+  .about-section p {
+    font-size: 0.95rem;
   }
   
   .features-grid,
   .usecases-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .feature-card {
+    padding: 20px;
+  }
+  
+  .feature-icon {
+    font-size: 2rem;
+  }
+  
+  .feature-card h4 {
+    font-size: 1.1rem;
+  }
+  
+  .feature-card p {
+    font-size: 0.9rem;
+  }
+  
+  .process-step {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .step-number {
+    width: 40px;
+    height: 40px;
+    font-size: 1.1rem;
+  }
+  
+  .step-content h4 {
+    font-size: 1.1rem;
+  }
+  
+  .step-content p {
+    font-size: 0.9rem;
+  }
+  
+  .usecase-item {
+    padding: 16px;
+  }
+  
+  .usecase-item strong {
+    font-size: 1rem;
+  }
+  
+  .usecase-item p {
+    font-size: 0.9rem;
+  }
+  
+  .contact-page {
+    padding: 0;
   }
   
   .contact-container {
     grid-template-columns: 1fr;
-    gap: 32px;
-    padding: 24px;
+    gap: 24px;
+    padding: 16px;
+  }
+  
+  .contact-info {
+    gap: 24px;
   }
   
   .contact-phone-icon {
-    font-size: 5rem;
+    font-size: 4rem;
     text-align: center;
+    margin-bottom: 12px;
+  }
+  
+  .contact-details {
+    gap: 20px;
+  }
+  
+  .contact-item {
+    gap: 12px;
+  }
+  
+  .contact-icon-small {
+    font-size: 1.3rem;
+    width: 28px;
+  }
+  
+  .contact-text strong {
+    font-size: 0.95rem;
+  }
+  
+  .contact-text p {
+    font-size: 0.9rem;
+  }
+  
+  .contact-note {
+    padding: 16px;
+    margin-top: 16px;
+  }
+  
+  .contact-note p {
+    font-size: 0.9rem;
+  }
+  
+  .contact-form-section {
+    padding: 24px 20px;
+  }
+  
+  .contact-form-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 24px;
+  }
+  
+  .contact-form {
+    gap: 16px;
   }
   
   .form-row {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .contact-form input,
+  .contact-form textarea {
+    padding: 14px 16px;
+    font-size: 0.95rem;
   }
   
   .contact-submit {
     width: 100%;
     justify-self: stretch;
+    padding: 14px 24px;
+    font-size: 0.95rem;
+  }
+  
+  .page-footer {
+    padding: 20px 16px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Additional responsive styles for very small screens */
+@media (max-width: 480px) {
+  .page {
+    padding: 12px 8px 32px;
+    gap: 16px;
+  }
+  
+  .frame {
+    padding: 16px 12px;
+    border-radius: var(--radius-md);
+  }
+  
+  .page-header {
+    padding: 12px 16px;
+  }
+  
+  .brand h1 {
+    font-size: 1.3rem;
+  }
+  
+  .brand p {
+    font-size: 0.8rem;
+  }
+  
+  .nav-link {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    flex: 1 1 45%;
+  }
+  
+  .platform-selection {
+    padding: 20px 12px;
+  }
+  
+  .platform-selection h2 {
+    font-size: 1.2rem;
+  }
+  
+  .platform-btn {
+    padding: 24px 16px;
+  }
+  
+  .platform-btn h3 {
+    font-size: 1.1rem;
+  }
+  
+  .intro h2 {
+    font-size: 1.3rem;
+  }
+  
+  .auth-card,
+  .risk-card,
+  .alert-card {
+    padding: 20px 16px;
+    width: calc(100% - 24px);
+    margin: 0 12px;
+  }
+  
+  .auth-card h2 {
+    font-size: 1.3rem;
+  }
+  
+  .contact-form-section h2 {
+    font-size: 1.3rem;
+  }
+  
+  .about-hero h2 {
+    font-size: 1.5rem;
   }
 }
 
