@@ -542,7 +542,12 @@ function goToSection(sectionId, addToHist = true) {
       displayType = 'grid';
     }
     section.style.display = displayType;
-    if (addToHist) addToHistory(sectionId);
+    if (addToHist) {
+      addToHistory(sectionId);
+    } else {
+      // Still update buttons even if not adding to history
+      updateNavButtons();
+    }
     
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -551,29 +556,39 @@ function goToSection(sectionId, addToHist = true) {
 
 function updateNavButtons() {
   if (navBack) {
-    navBack.disabled = navHistoryIndex <= 0;
-    navBack.style.opacity = navHistoryIndex <= 0 ? '0.4' : '1';
+    const canGoBack = navHistoryIndex > 0;
+    navBack.disabled = !canGoBack;
+    navBack.style.opacity = canGoBack ? '1' : '0.4';
+    navBack.style.cursor = canGoBack ? 'pointer' : 'not-allowed';
   }
   if (navForward) {
-    navForward.disabled = navHistoryIndex >= navHistory.length - 1;
-    navForward.style.opacity = navHistoryIndex >= navHistory.length - 1 ? '0.4' : '1';
+    const canGoForward = navHistoryIndex < navHistory.length - 1;
+    navForward.disabled = !canGoForward;
+    navForward.style.opacity = canGoForward ? '1' : '0.4';
+    navForward.style.cursor = canGoForward ? 'pointer' : 'not-allowed';
   }
 }
 
 if (navBack) {
-  navBack.addEventListener('click', () => {
+  navBack.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (navHistoryIndex > 0) {
       navHistoryIndex--;
       goToSection(navHistory[navHistoryIndex], false);
+      updateNavButtons();
     }
   });
 }
 
 if (navForward) {
-  navForward.addEventListener('click', () => {
+  navForward.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (navHistoryIndex < navHistory.length - 1) {
       navHistoryIndex++;
       goToSection(navHistory[navHistoryIndex], false);
+      updateNavButtons();
     }
   });
 }
@@ -641,7 +656,19 @@ if (contactForm) {
   });
 }
 
-// Initialize navigation
-if (platformSelection) {
-  addToHistory('platformSelection');
+// Initialize navigation on page load
+function initializeNavigation() {
+  if (platformSelection) {
+    // Reset history and add initial section
+    navHistory = ['platformSelection'];
+    navHistoryIndex = 0;
+    updateNavButtons();
+  }
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeNavigation);
+} else {
+  initializeNavigation();
 }
